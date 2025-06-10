@@ -2,6 +2,7 @@ import asyncio
 
 from agents import Runner, gen_trace_id, trace
 
+from clarifier import ClarifyingQuestions, clarifier_agent
 from planner import WebSearchItem, WebSearchPlan, planner_agent
 from report_generator import ReportData, writer_agent
 from web_search import search_agent
@@ -9,16 +10,29 @@ from web_search import search_agent
 
 class ResearchManager:
 
-    async def run(self, query: str):
-        """Run the deep research process, yielding the status updates and the final report"""
+    async def run(self, query: str, clarifications: str | None = None):
+        """Run the deep research process, yielding status updates and the final report.
+
+        If *clarifications* are provided (the user's answers to the clarifying questions), we will use them to
+        augment the planning and reporting stages. Otherwise this behaves exactly like the previous implementation.
+        """
         trace_id = gen_trace_id()
         with trace("Research trace", trace_id=trace_id):
             print("Starting research...")
-            search_plan = await self.plan_searches(query)
+
+            # Combine the original query with any clarification the user has supplied.
+            if clarifications:
+                combined_query = (
+                    f"Original query: {query}\n\nUser clarifications:\n{clarifications}"
+                )
+            else:
+                combined_query = query
+
+            search_plan = await self.plan_searches(combined_query)
             yield "Searches planned, starting to search..."
             search_results = await self.perform_searches(search_plan)
             yield "Searches complete, writing report..."
-            report = await self.write_report(query, search_results)
+            report = await self.write_report(combined_query, search_results)
             yield report.markdown_report
 
     async def plan_searches(self, query: str) -> WebSearchPlan:
@@ -63,7 +77,7 @@ class ResearchManager:
     async def write_report(self, query: str, search_results: list[str]) -> ReportData:
         """Write the report for the query"""
         print("Thinking about report...")
-        input = f"Original query: {query}\nSummarized search results: {search_results}"
+        input = f"{query}\nSummarized search results: {search_results}"
         result = await Runner.run(
             writer_agent,
             input,
@@ -71,3 +85,13 @@ class ResearchManager:
 
         print("Finished writing report")
         return result.final_output_as(ReportData)
+
+    async def get_clarifying_questions(self, query: str) -> list[str]:
+        """Generate clarifying questions for a given query."""
+        print("Generating clarifying questions...")
+        result = await Runner.run(clarifier_agent, f"Query: {query}")
+        questions_model: ClarifyingQuestions = result.final_output_as(
+            ClarifyingQuestions
+        )
+        print(f"Generated {len(questions_model.questions)} clarifying questions")
+        return questions_model.questions
