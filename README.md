@@ -1,3 +1,15 @@
+---
+title: Deep Research
+emoji: 🏆
+colorFrom: red
+colorTo: green
+sdk: gradio
+sdk_version: 5.34.0
+app_file: main.py
+pinned: false
+license: apache-2.0
+---
+
 # Deep Research
 
 **Deep Research** is an AI-powered research assistant that helps users investigate complex topics by generating clarifying questions, planning web searches, and synthesizing detailed markdown reports.
