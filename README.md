@@ -10,7 +10,7 @@ pinned: false
 license: apache-2.0
 ---
 
-![CD to HF Space](https://github.com/serverdaun/deep-research/actions/workflows/sync-to-hf.yml/badge.svg)
+![CD to HF Space](https://github.com/serverdaun/deep_research/actions/workflows/sync-to-hf.yml/badge.svg)
 
 # Deep Research
 
