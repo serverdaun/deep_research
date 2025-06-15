@@ -10,6 +10,8 @@ pinned: false
 license: apache-2.0
 ---
 
+![CD to HF Space](https://github.com/serverdaun/deep-research/actions/workflows/sync-to-hf.yml/badge.svg)
+
 # Deep Research
 
 **Deep Research** is an AI-powered research assistant that helps users investigate complex topics by generating clarifying questions, planning web searches, and synthesizing detailed markdown reports.
