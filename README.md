@@ -24,13 +24,13 @@ license: apache-2.0
 - **Planning**: Suggests up to five web searches to address the query.
 - **Web Search**: Summarizes web results for each planned search.
 - **Report Generation**: Produces a comprehensive markdown report with a summary and follow-up questions.
-- **Interactive UI**: Simple Gradio interface for end-to-end research.
+- **Interactive UI**: Chat-based Gradio interface for end-to-end research.
 
 ## Usage
 
-1. **Input your research topic** in the UI.
-2. **Answer clarifying questions** (if any).
-3. **Run the research** to receive a detailed report.
+1. **Send your research topic** in the chat box.
+2. **Answer the clarifying questions**.
+3. **Receive the detailed report** back in the same conversation.
 
 ## Tech Stack
 
@@ -55,13 +55,17 @@ license: apache-2.0
    ```sh
    pip install uv
    ```
-3. **Install dependencies:**
+3. **Create enviroment and install dependencies:**
    ```sh
-   uv pip install -r pyproject.toml
+   uv sync
+   ```
+4. **Activate the enviroment**
+   ```sh
+   source .venv/bin/activate #.venv/Scripts/activate on Win
    ```
 4. **Run the app:**
    ```sh
-   uv pip run python src/main.py
+   uv run src/main.py
    ```
 
-The app will launch a Gradio interface in your browser.
+The app will launch a Gradio interface that you can access in your browser.
