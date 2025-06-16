@@ -12,6 +12,8 @@ license: apache-2.0
 
 ![CD to HF Space](https://github.com/serverdaun/deep_research/actions/workflows/sync-to-hf.yml/badge.svg)
 
+[![View on Hugging Face Spaces](https://img.shields.io/badge/Hugging%20Face-Spaces-blue?logo=huggingface)](https://huggingface.co/spaces/serverdaun/deep-research)
+
 # Deep Research
 
 **Deep Research** is an AI-powered research assistant that helps users investigate complex topics by generating clarifying questions, planning web searches, and synthesizing detailed markdown reports.
