@@ -22,13 +22,13 @@ license: apache-2.0
 - **Planning**: Suggests up to five web searches to address the query.
 - **Web Search**: Summarizes web results for each planned search.
 - **Report Generation**: Produces a comprehensive markdown report with a summary and follow-up questions.
-- **Interactive UI**: Simple Gradio interface for end-to-end research.
+- **Interactive UI**: Chat-based Gradio interface for end-to-end research.
 
 ## Usage
 
-1. **Input your research topic** in the UI.
-2. **Answer clarifying questions** (if any).
-3. **Run the research** to receive a detailed report.
+1. **Send your research topic** in the chat box.
+2. **Answer the clarifying questions** directly in the chat.
+3. **Receive the detailed report** back in the same conversation.
 
 ## Tech Stack
 

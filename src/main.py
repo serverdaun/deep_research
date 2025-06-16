@@ -5,74 +5,87 @@ from research_manager import ResearchManager
 
 load_dotenv()
 
-
-async def ask_clarifications(query: str) -> tuple[str, list[str]]:
-    """Generate clarifying questions for *query* and return both a nicely formatted string and the raw list."""
-    manager = ResearchManager()
-    questions = await manager.get_clarifying_questions(query)
-
-    if not questions:
-        return (
-            "No clarifying questions were generated. You can proceed to run the research.",
-            [],
-        )
-
-    formatted = "\n".join(f"{idx+1}. {q}" for idx, q in enumerate(questions))
-    return formatted, questions
+WELCOME_MESSAGE = (
+    "Welcome to **Deep Research**!\n"
+    "Send me a research topic and I will ask clarifying questions.\n"
+    "Answer them here to receive a detailed report."
+)
 
 
-async def run_research(query: str, answers: str, questions: list[str]):
-    """Run the complete research pipeline and stream the markdown report."""
-    clarifications_block = ""
+def _format_clarifications(questions: list[str]) -> str:
+    return "\n".join(f"{idx + 1}. {q}" for idx, q in enumerate(questions))
 
-    answer_lines = [line.strip() for line in answers.split("\n")]
-    while len(answer_lines) < len(questions):
-        answer_lines.append("")
 
-    q_and_a = []
-    for idx, question in enumerate(questions):
-        answer = answer_lines[idx]
-        q_and_a.append(f"Q{idx+1}: {question}\nA{idx+1}: {answer}")
+def _build_clarification_block(questions: list[str], answers: str) -> str:
+    lines = [line.strip() for line in answers.split("\n")]
+    while len(lines) < len(questions):
+        lines.append("")
+    return "\n".join(
+        f"Q{idx + 1}: {q}\nA{idx + 1}: {lines[idx]}" for idx, q in enumerate(questions)
+    )
 
-    clarifications_block = "\n".join(q_and_a)
 
-    async for chunk in ResearchManager().run(query, clarifications_block):
-        yield chunk
+async def respond(
+    message: str, history: list[tuple[str | None, str | None]], state: dict
+):
+    if not state:
+        state = {"stage": "awaiting_query", "query": "", "questions": []}
+
+    history.append((message, None))
+
+    if state["stage"] == "awaiting_query":
+        state["query"] = message
+        manager = ResearchManager()
+        questions = await manager.get_clarifying_questions(message)
+        state["questions"] = questions
+        if questions:
+            state["stage"] = "awaiting_answers"
+            q_text = _format_clarifications(questions)
+            history.append(
+                (
+                    None,
+                    f"Please answer the following questions, one per line:\n{q_text}",
+                )
+            )
+            yield history, state
+        else:
+            state["stage"] = "running"
+            history.append((None, ""))
+            async for chunk in manager.run(message, ""):
+                history[-1] = (None, (history[-1][1] or "") + chunk)
+                yield history, state
+            state["stage"] = "awaiting_query"
+            yield history, state
+    elif state["stage"] == "awaiting_answers":
+        answers_block = _build_clarification_block(state["questions"], message)
+        manager = ResearchManager()
+        state["stage"] = "running"
+        history.append((None, ""))
+        async for chunk in manager.run(state["query"], answers_block):
+            history[-1] = (None, (history[-1][1] or "") + chunk)
+            yield history, state
+        state["stage"] = "awaiting_query"
+        yield history, state
+    else:
+        history.append((None, "Please wait for the current task to finish."))
+        yield history, state
+
+
+def reset():
+    return [(None, WELCOME_MESSAGE)], {
+        "stage": "awaiting_query",
+        "query": "",
+        "questions": [],
+    }
 
 
 with gr.Blocks(theme=gr.themes.Default(primary_hue="yellow")) as ui:
-    gr.Markdown("# Deep Research")
+    chatbot = gr.Chatbot()
+    state = gr.State({})
+    msg = gr.Textbox(placeholder="Type your message and press Enter")
 
-    with gr.Row():
-        query_textbox = gr.Textbox(
-            label="What topic would you like to research?",
-            placeholder="e.g. How to create a Deep Research Agent?",
-        )
-        ask_button = gr.Button("Ask clarifying questions")
-
-    clarifying_questions_state = gr.State([])
-    clarifications_markdown = gr.Markdown(label="Clarifying questions will appear here")
-
-    clarification_answers_box = gr.Textbox(
-        label="Your answers to the clarifying questions (one per line)",
-        placeholder="Answer 1\nAnswer 2\n...",
-        lines=3,
-    )
-
-    run_button = gr.Button("Run research", variant="primary")
-    report = gr.Markdown(label="Report")
-
-    ask_button.click(
-        fn=ask_clarifications,
-        inputs=query_textbox,
-        outputs=[clarifications_markdown, clarifying_questions_state],
-    )
-
-    run_button.click(
-        fn=run_research,
-        inputs=[query_textbox, clarification_answers_box, clarifying_questions_state],
-        outputs=report,
-    )
+    ui.load(fn=reset, outputs=[chatbot, state])
+    msg.submit(respond, inputs=[msg, chatbot, state], outputs=[chatbot, state])
 
 if __name__ == "__main__":
     ui.launch()
