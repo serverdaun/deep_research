@@ -1,4 +1,5 @@
 from agents import Runner, gen_trace_id, trace
+from datetime import datetime
 
 from clarifier import ClarifyingQuestions, clarifier_agent
 from report_generator import ReportData
@@ -13,7 +14,9 @@ class ResearchManager:
         with trace("Research trace", trace_id=trace_id):
             print("Starting research with ResearchAgent…")
 
-            combined_query = (
+            today = datetime.utcnow().date().isoformat()
+            prefix = f"Current date: {today}\n"
+            combined_query = prefix + (
                 f"Original query: {query}\n\nUser clarifications:\n{clarifications}"
                 if clarifications
                 else query
